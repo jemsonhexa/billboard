@@ -63,17 +63,26 @@ class _PlayerState extends State<Player> {
             ? SizedBox(
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height,
-                child: FittedBox(
-                  fit: BoxFit.cover,
-                  child: SizedBox(
-                    width: _controller.value.size.width,
-                    height: _controller.value.size.height,
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: VideoPlayer(_controller),
-                    ),
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 9 / 16, // Keep Reel format
+                    child: VideoPlayer(_controller),
                   ),
                 ),
+
+                // FittedBox(
+                //   fit: BoxFit.cover,
+                //   child: SizedBox(
+                //     width: _controller.value.size.width,
+                //     height: _controller.value.size.height,
+                //     child:
+                //         //  AspectRatio(
+                //         //   aspectRatio: 16 / 9,
+                //         //   child:
+                //         VideoPlayer(_controller),
+                //     // ),
+                //   ),
+                // ),
               )
             : const CircularProgressIndicator(),
       ),

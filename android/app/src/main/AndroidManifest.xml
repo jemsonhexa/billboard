@@ -3,6 +3,16 @@
         android:label="billboard_tv"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Boot receiver -->
+        <receiver android:name=".BootReceiver"
+        android:enabled="true"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+        </intent-filter>
+        </receiver>
+
              <!-- Main activity for phone + TV -->
         <activity
             android:name=".MainActivity"
@@ -30,7 +40,7 @@
     <!-- Device capability declarations -->
     <uses-feature android:name="android.software.leanback" android:required="false"/>
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
-
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 </manifest>
