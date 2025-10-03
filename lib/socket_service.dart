@@ -1,11 +1,18 @@
 import 'dart:developer';
 import 'package:socket_io_client/socket_io_client.dart' as socketservice;
+import 'package:flutter/foundation.dart';
+import 'package:video_player/video_player.dart';
 
 class SocketService {
   late socketservice.Socket socket;
 
+  // Add ValueNotifier to store video URLs
+  ValueNotifier<List<String>> videoUrls = ValueNotifier<List<String>>([]);
+  bool isConnected = false;
+
+  VideoPlayerController? videoController; // current video
+
   void connect() {
-    // pc IP
     String url = 'http://10.114.20.151:3000';
 
     socket = socketservice.io(
@@ -17,37 +24,26 @@ class SocketService {
           .build(),
     );
 
-    socket.connect();
-    //when connected
+    // Listeners
     socket.onConnect((_) {
+      isConnected = true;
       log('Connected to server');
       socket.emit('msg', 'Client says hello');
     });
-    //recieve msg from servr
-    socket.on('fromServer', (data) {
-      log('Message from server: $data');
+
+    socket.on('videos', (data) {
+      if (data is List) {
+        // print(data);
+        videoUrls.value = List<String>.from(data); // update the notifier
+      }
     });
 
-    socket.on('video', (url) {
-      print('Play this video: $url');
-      // Pass `url` to VideoPlayerController
-
-      // _controller = VideoPlayerController.network(url)
-      //   ..initialize().then((_) {
-      //     _controller.play();
-      //   });
+    socket.onDisconnect((_) {
+      log('Socket disconnect');
+      isConnected = false;
     });
-
-    //when disconnect
-    socket.onDisconnect((_) => log('Disconnected'));
     socket.onError((err) => log('Socket error: $err'));
-  }
 
-  void sendMessage(String msg) {
-    socket.emit('msg', msg);
-  }
-
-  void dispose() {
-    socket.dispose();
+    socket.connect();
   }
 }
