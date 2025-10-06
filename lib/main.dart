@@ -107,6 +107,7 @@ class _MyAppState extends State<MyApp> {
           //log(urls.toString());
           if (urls.isNotEmpty) {
             return Player(
+              key: UniqueKey(), // Forces fresh widget
               videoUrls: urls,
               controllerCallback: (controller) {
                 socketService.videoController = controller;
