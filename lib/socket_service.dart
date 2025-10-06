@@ -13,13 +13,13 @@ class SocketService {
   VideoPlayerController? videoController; // current video
 
   void connect() {
-    String url = 'http://10.114.20.151:3000';
+    String url = 'http://192.168.29.36:3000';
+    //http://192.168.29.222:4000/
 
     socket = socketservice.io(
       url,
       socketservice.OptionBuilder()
           .setTransports(['websocket'])
-          .disableAutoConnect()
           .enableForceNew()
           .build(),
     );
@@ -30,7 +30,7 @@ class SocketService {
       log('Connected to server');
       socket.emit('msg', 'Client says hello');
     });
-
+    //use play
     socket.on('videos', (data) {
       if (data is List) {
         // print(data);

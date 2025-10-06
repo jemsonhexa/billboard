@@ -20,7 +20,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final SocketService socketService = SocketService();
   bool hasInternet = true;
-  List<ConnectivityResult> _connectionStatus = [ConnectivityResult.none];
+  List<ConnectivityResult> connectionStatus = [ConnectivityResult.none];
   final Connectivity _connectivity = Connectivity();
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
@@ -28,7 +28,6 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initConnectivity();
-
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
       _updateConnectionStatus,
     );
@@ -40,10 +39,8 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initConnectivity() async {
     late List<ConnectivityResult> result;
-    // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       result = await _connectivity.checkConnectivity();
     } on PlatformException catch (e) {
@@ -63,14 +60,12 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _updateConnectionStatus(List<ConnectivityResult> result) async {
     setState(() {
-      _connectionStatus = result;
-
+      connectionStatus = result;
       hasInternet =
           !(result.length == 1 && result.contains(ConnectivityResult.none));
     });
 
-    log('Connectivity changed: $_connectionStatus');
-    log(hasInternet.toString());
+    log('Internet - ${hasInternet.toString()}');
     socketService.connect();
 
     if (!hasInternet && socketService.videoController != null) {
@@ -80,7 +75,10 @@ class _MyAppState extends State<MyApp> {
       // Resume video if internet restored
       socketService.videoController!.play();
       // Reconnect socket if needed
-      if (!socketService.isConnected) socketService.connect();
+      if (!socketService.isConnected) {
+        log("server disconnect");
+        socketService.connect();
+      }
     }
   }
 
@@ -106,7 +104,7 @@ class _MyAppState extends State<MyApp> {
       home: ValueListenableBuilder<List<String>>(
         valueListenable: socketService.videoUrls,
         builder: (context, urls, _) {
-          // log(urls.toString());
+          //log(urls.toString());
           if (urls.isNotEmpty) {
             return Player(
               videoUrls: urls,
