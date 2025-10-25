@@ -1,12 +1,16 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class LocalOfflinePlayer extends StatefulWidget {
   final List<File> videos;
+  final ValueNotifier<bool> isPlayingNotifier;
 
-  const LocalOfflinePlayer({super.key, required this.videos});
+  const LocalOfflinePlayer({
+    super.key,
+    required this.videos,
+    required this.isPlayingNotifier,
+  });
 
   @override
   State<LocalOfflinePlayer> createState() => _LocalOfflinePlayerState();
@@ -20,26 +24,40 @@ class _LocalOfflinePlayerState extends State<LocalOfflinePlayer> {
   @override
   void initState() {
     super.initState();
-    _playVideo(widget.videos[currentIndex]);
+    if (widget.videos.isNotEmpty) _playVideo(widget.videos[currentIndex]);
+
+    widget.isPlayingNotifier.addListener(() {
+      if (_controller != null && _controller!.value.isInitialized) {
+        if (widget.isPlayingNotifier.value) {
+          _controller!.play();
+        } else {
+          _controller!.pause();
+        }
+      }
+    });
   }
 
   Future<void> _playVideo(File file) async {
-    // Dispose previous controller safely
-    if (_controller != null) {
-      await _controller!.pause();
-      await _controller!.dispose();
+    try {
+      await _controller?.pause();
+      await _controller?.dispose();
+
+      if (_isDisposed) return;
+
+      _controller = VideoPlayerController.file(file);
+      await _controller!.initialize();
+      _controller!.setLooping(false);
+
+      if (widget.isPlayingNotifier.value) await _controller!.play();
+
+      _controller!.removeListener(_onVideoEnd);
+      _controller!.addListener(_onVideoEnd);
+
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('Error playing video: $e');
+      _nextVideo(); // skip broken file
     }
-
-    if (_isDisposed) return;
-
-    _controller = VideoPlayerController.file(file);
-    await _controller!.initialize();
-    _controller!.setLooping(false);
-    await _controller!.play();
-
-    _controller!.addListener(_onVideoEnd);
-
-    if (mounted) setState(() {});
   }
 
   void _onVideoEnd() {
@@ -54,7 +72,7 @@ class _LocalOfflinePlayerState extends State<LocalOfflinePlayer> {
   }
 
   Future<void> _nextVideo() async {
-    if (widget.videos.isEmpty) return;
+    if (_isDisposed || widget.videos.isEmpty) return;
     currentIndex = (currentIndex + 1) % widget.videos.length;
     await _playVideo(widget.videos[currentIndex]);
   }
