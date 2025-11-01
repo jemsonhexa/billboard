@@ -1,6 +1,9 @@
+import 'dart:developer';
 import 'dart:io';
+import 'package:billboard_tv/comand.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:provider/provider.dart';
 
 class LocalOfflinePlayer extends StatefulWidget {
   final List<File> videos;
@@ -26,6 +29,7 @@ class _LocalOfflinePlayerState extends State<LocalOfflinePlayer> {
     super.initState();
     if (widget.videos.isNotEmpty) _playVideo(widget.videos[currentIndex]);
 
+    // Play/pause control via isPlayingNotifier
     widget.isPlayingNotifier.addListener(() {
       if (_controller != null && _controller!.value.isInitialized) {
         if (widget.isPlayingNotifier.value) {
@@ -34,6 +38,48 @@ class _LocalOfflinePlayerState extends State<LocalOfflinePlayer> {
           _controller!.pause();
         }
       }
+    });
+
+    // SnackBar feedback
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final commandNotifier = context.read<CommandNotifier>();
+      commandNotifier.addListener(() {
+        if (!mounted) return;
+        final command = commandNotifier.latestCommand;
+
+        if (command == null) return;
+
+        log('player cmd: $command');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Command: $command',
+              style: TextStyle(),
+              textAlign: TextAlign.center,
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.grey,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+
+        //Command logic
+        switch (command.toLowerCase()) {
+          case 'play':
+            _controller?.play();
+            widget.isPlayingNotifier.value = true;
+            break;
+          case 'pause':
+            _controller?.pause();
+            widget.isPlayingNotifier.value = false;
+            break;
+          case 'next':
+            _nextVideo();
+            break;
+          default:
+            debugPrint('Unknown command: $command');
+        }
+      });
     });
   }
 
@@ -100,7 +146,10 @@ class _LocalOfflinePlayerState extends State<LocalOfflinePlayer> {
       body: SizedBox(
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
-        child: AspectRatio(aspectRatio: 9 / 16, child: VideoPlayer(controller)),
+        child: AspectRatio(
+          aspectRatio: controller.value.aspectRatio,
+          child: VideoPlayer(controller),
+        ),
       ),
     );
   }

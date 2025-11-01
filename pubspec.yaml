@@ -41,6 +41,8 @@ dependencies:
   path_provider: 
   shared_preferences:
   permission_handler:
+  provider:
+  disk_space_plus: ^0.2.6
 
 
 dev_dependencies:
